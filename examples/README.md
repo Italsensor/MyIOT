@@ -2,7 +2,7 @@
 
 This folder is related that you can use in order to test the functionality of the MyIOT module.
 
-All the module functionalities can be managed through a dedicated system application which can be executed directly from the command line. In order to show the online guide type:
+All the module functionalities can be managed through a dedicated system application **rpicm3extended** which can be executed directly from the command line. In order to show the online guide type:
 
 ```
 $ ./rpicm3extended
@@ -30,10 +30,10 @@ To manage outputs on expansion module there are the following options:
   
 There are also other demo programs, written in Python, that can be used as starting point in writing their own applications.
 
-**testout.py** expansion interface outputs and led demo
-**tstGPIO18.py** set the GPIO18 line to high in order to activate the Common Module reset procedure after 60s
-**tstGPIO25.py** Read the GPIO25 line state (status of RST button)
-**tstHWWDT.py** Hardware watchdog usage example
+- **testout.py** expansion interface outputs and led demo
+- **tstGPIO18.py** set the GPIO18 line to high in order to activate the Common Module reset procedure after 60s
+- **tstGPIO25.py** Read the GPIO25 line state (status of RST button)
+- **tstHWWDT.py** Hardware watchdog usage example
 
 Each demo can be interrupted during execution anytime by pressing the CTRL+C key combination.
 
