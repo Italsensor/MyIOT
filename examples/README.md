@@ -40,3 +40,7 @@ Each demo can be interrupted during execution anytime by pressing the CTRL+C key
 Major details are written into the comments contained inside every file.
 
 For other details about the available GPIO and related function take a look at the module [manual](/manual/First-Startup_ENG.pdf) into the *manual* section of this repository.
+
+# Tornado folder
+
+This is related to a very simple communication project based on the Python module Tornado, using a simple Python script and a php file you are able to turn on and off a led connected to a raspberry GPIO. See the Python file about the usage instruction.
