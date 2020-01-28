@@ -1,0 +1,541 @@
+#!/bin/bash
+
+#
+# Copy the script into the folder                 : /usr/local/bin
+# Set the script execution permission with        : sudo chmod 755 rpicm3extended
+# Run script without any argument to show the help: rpicm3extended
+#
+# To run in parallel and on background multiple script use the & as shown into the example below:
+#
+# rpicm3extended led 500 500 10 & rpicm3extended led1 500 500 20 &
+#
+# this command will run in background two process, led and led1 will blink at the same time.
+# to see the status of the process type "job" into the terminal.
+#
+
+# V1.0 - 08/02/2019 
+
+# Uncomment following line for debug messages
+DBGMSG=1
+
+# ------------------------------------------------
+# Check about argument number
+# no arguments show the help
+# ------------------------------------------------
+if [ $# -eq 0 ]
+then
+	clear
+	echo "RPICM3 utility - User Manual"
+	echo "rpicm3extended led on|off|time_ms|time_on_ms time_off_ms num_cycles"
+	echo "rpicm3extended led1 on|off|time_ms|time_on_ms time_off_ms num_cycles"
+	echo "rpicm3extended out<n> (n=1...8) on|off"
+	echo "rpicm3extended outall on|off|unexport"
+	echo "rpicm3extended outen<n> (n=1..2) on|off"
+	echo "rpicm3extended outenall on|off"
+	echo "rpicm3extended watchdog enable|disable|heartbeat|timeout"
+	echo "rpicm3extended reset"
+	exit 0
+fi
+
+# ------------------------------------------------
+# Option selection/checking/execution
+# ------------------------------------------------
+case "$1" in
+	'led' | 'led1' )
+		if [ $DBGMSG -eq 1 ]; then echo "command: $1" ; fi
+		
+		# Check about the GPIO16 initialization
+		if [ $1 = 'led' ]
+		then
+			if [ ! -d "/sys/class/gpio/gpio16" ]
+			then
+				echo 16 > /sys/class/gpio/export
+				echo out > /sys/class/gpio/gpio16/direction
+			fi
+		fi
+		
+		# Check about the GPIO34 initialization
+		if [ $1 = 'led1' ]
+		then
+			if [ ! -d "/sys/class/gpio/gpio34" ]
+			then
+				echo 34 > /sys/class/gpio/export
+				echo out > /sys/class/gpio/gpio34/direction
+			fi
+		fi
+		
+		# Check about the command/option
+		case "$2" in
+			'on' )
+				# Turn the led on
+				if [ $1 = 'led' ]
+				then
+					echo 1 > /sys/class/gpio/gpio16/value
+				fi
+				
+				# Turn the led1 on
+				if [ $1 = 'led1' ]
+				then
+					echo 1 > /sys/class/gpio/gpio34/value
+				fi
+			;;
+			'off' )
+				# Turn the led off
+				if [ $1 = 'led' ]
+				then
+					echo 0 > /sys/class/gpio/gpio16/value
+				fi
+				
+				# Turn the led1 off
+				if [ $1 = 'led1' ]
+				then
+					echo 0 > /sys/class/gpio/gpio34/value
+				fi
+				
+			;;
+			* )
+				# Check about the argument number and type
+				if [ $# -eq 2 ]
+				then
+					# Check if the option is a integer
+					reg_expr_is_int='^[0-9]+$'
+					if [[ ! ( $2 =~ $reg_expr_is_int ) ]]
+					then
+					   echo "Switch on the led and then wait for <time_ms> time before switch it off"
+					   echo "rpicm3 led time_ms"
+					   echo "Error: \"time_ms\" parameter shall be a positive integer number!";
+					   exit 1
+					else
+						# Perform the led toggle
+						if [ $1 = 'led' ]
+						then
+							echo 1 > /sys/class/gpio/gpio16/value
+							sleep $(echo "$2" | awk '{printf "%.3f \n", $1/1000}')
+							echo 0 > /sys/class/gpio/gpio16/value
+						fi
+						
+						# Perform the led1 toggle
+						if [ $1 = 'led1' ]
+						then
+							echo 1 > /sys/class/gpio/gpio34/value
+							sleep $(echo "$2" | awk '{printf "%.3f \n", $1/1000}')
+							echo 0 > /sys/class/gpio/gpio34/value
+						fi
+						
+					fi
+				elif [ $# -eq 4 ]
+					then
+						# Check if time_on_ms is an integer number
+						if [[ ! ( $2 =~ $reg_expr_is_int ) ]]
+						then
+							echo "switch on for <time_on_ms> then switch it off for <time_off_ms> then repeat for <num_cycles times>"
+							echo "rpicm3 led time_on_ms time_off_ms num_cycles"
+							echo "Error: \"time_on_ms\" shall be a positive integer number!";
+							exit 1
+						else
+							TIME_ON_MS=$(echo "$2" | awk '{printf "%.3f \n", $1/1000}')
+						fi
+						
+						# Check if time_off_ms is an integer number
+						if [[ ! ( $3 =~ $reg_expr_is_int ) ]]
+						then
+							echo "switch on for <time_on_ms> then switch it off for <time_off_ms> then repeat for <num_cycles times>"
+							echo "Error: \"time_off_ms\" shall be a positive integer number!";
+							exit 1
+						else
+							TIME_OFF_MS=$(echo "$3" | awk '{printf "%.3f \n", $1/1000}')
+						fi
+						
+						# Check if num_cyclesis is an integer number
+						if [[ ! ( $4 =~ $reg_expr_is_int ) ]]
+						then
+							echo "switch on for <time_on_ms> then switch it off for <time_off_ms> then repeat for <num_cycles times>"
+							echo "Error: \"num_cycles\" shall be a positive integer number!";
+							exit 1
+						else
+							ITERATION_NUMBERS=$(echo "$4")
+						fi
+						
+						# Perform the led toggle for num_cycles times
+						for i in $(seq 1 $ITERATION_NUMBERS)
+						do
+							# led toggle
+							if [ $1 = 'led' ]
+							then
+								echo 1 > /sys/class/gpio/gpio16/value
+								# sleep $(echo "$2" | awk '{printf "%.3f \n", $1/1000}')
+								sleep $TIME_ON_MS
+								echo 0 > /sys/class/gpio/gpio16/value
+								# sleep $(echo "$3" | awk '{printf "%.3f \n", $1/1000}')
+								sleep $TIME_OFF_MS
+							fi
+							
+							# led1 toggle
+							if [ $1 = 'led1' ]
+							then
+								echo 1 > /sys/class/gpio/gpio34/value
+								# sleep $(echo "$2" | awk '{printf "%.3f \n", $1/1000}')
+								sleep $TIME_ON_MS
+								echo 0 > /sys/class/gpio/gpio34/value
+								# sleep $(echo "$3" | awk '{printf "%.3f \n", $1/1000}')
+								sleep $TIME_OFF_MS
+							fi
+						done 
+				else
+					echo "RPICM3 utility reference manual - led section"
+					echo "rpicm3 led on|off|time_ms|time_on_ms time_off_ms num_cycles"
+					echo "rpicm3 led1 on|off|time_ms|time_on_ms time_off_ms num_cycles"
+					exit 1
+				fi
+			;;
+		esac
+	;;
+	'watchdog' )
+		if [ $DBGMSG -eq 1 ]; then echo "command: watchdog" ; fi
+		
+		# Set the GPIO27 direction (watchdog heartbeat)
+		if [ ! -d "/sys/class/gpio/gpio27" ]; then
+			echo 27 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio27/direction
+		fi
+		
+		# Set the GPIO22 direction (watchdog enable line 1=enabled / 0=disabled)
+		if [ ! -d "/sys/class/gpio/gpio22" ]; then
+			echo 22 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio22/direction
+		fi
+		
+		# Set the GPIO17 direction (watchdog expiration when high)
+		if [ ! -d "/sys/class/gpio/gpio17" ]; then
+			echo 17 > /sys/class/gpio/export
+			echo in > /sys/class/gpio/gpio17/direction
+		fi
+		
+		# Check about watchdog options
+		case "$2" in
+			'enable' )
+				echo 1 > /sys/class/gpio/gpio22/value
+			;;
+			'disable' )
+				echo 0 > /sys/class/gpio/gpio22/value
+			;;
+			'heartbeat' )
+				if [ $(cat /sys/class/gpio/gpio27/value) == 0 ]; then
+					echo 1 > /sys/class/gpio/gpio27/value
+				else
+					echo 0 > /sys/class/gpio/gpio27/value
+				fi
+			;;
+			'timeout' )
+				# Report the watchdog status (1 = expired)
+				exit $(cat /sys/class/gpio/gpio17/value)
+			;;
+			* )
+				echo "RPICM3 utility reference manual - watchdog section"
+				echo "rpicm3 watchdog enable|disable|heartbeat|timeout"
+				echo "       enable   : enable the watchdog monitoring performed by the micro controller"
+				echo "       disable  : disable the watchdog monitoring performed by the micro controller"
+				echo "       heartbeat: perform a toggle of the heartbeat line (controlled by the microcontroller if the watchdog is enabled)"
+				echo "       timeout  : check if the microcontroller have detected a watchdog timeout, returned value 1 if expired."
+			;;
+		esac
+		
+	;;
+	'reset' )
+		if [ $DBGMSG -eq 1 ]; then echo "command: reset" ; fi
+		
+		# Set the GPIO18 direction
+		if [ ! -d "/sys/class/gpio/gpio18" ]
+		then
+			echo 18 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio18/direction
+		fi
+		
+		# Force GPIO18 to 1 (tells the microcontroller to perform a system reset)
+		echo 1 > /sys/class/gpio/gpio18/value
+	;;
+	'out1' )
+		if [ $DBGMSG -eq 1 ]; then echo "command type out: $1" ; fi
+		
+		# Set the direction
+		if [ ! -d "/sys/class/gpio/gpio36" ]
+		then
+			echo 36 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio36/direction
+		fi
+		
+		# Check about the on/off option
+		if [ $2 = 'on' ]; then
+			echo 1 > /sys/class/gpio/gpio36/value
+		elif [ $2 = 'off' ]; then
+			echo 0 > /sys/class/gpio/gpio36/value
+		else
+			echo "Error: out1 unknow parameter!"
+			exit 1
+		fi
+	;;
+	'out2' )
+		# Set the direction
+		if [ ! -d "/sys/class/gpio/gpio20" ]
+		then
+			echo 20 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio20/direction
+		fi
+		
+		# Check about the on/off option
+		if [ $2 = 'on' ]; then
+			echo 1 > /sys/class/gpio/gpio20/value
+		elif [ $2 = 'off' ]; then
+			echo 0 > /sys/class/gpio/gpio20/value
+		else
+			echo "Error: out2 unknow parameter!"
+			exit 1
+		fi
+	;;
+	'out3' )
+		# Set the direction
+		if [ ! -d "/sys/class/gpio/gpio37" ]
+		then
+			echo 37 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio37/direction
+		fi
+		
+		# Check about the on/off option
+		if [ $2 = 'on' ]; then
+			echo 1 > /sys/class/gpio/gpio37/value
+		elif [ $2 = 'off' ]; then
+			echo 0 > /sys/class/gpio/gpio37/value
+		else
+			echo "Error: out3 unknow parameter!"
+			exit 1
+		fi
+	;;
+	'out4' )
+		# Set the direction
+		if [ ! -d "/sys/class/gpio/gpio35" ]
+		then
+			echo 35 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio35/direction
+		fi
+		
+		# Check about the on/off option
+		if [ $2 = 'on' ]; then
+			echo 1 > /sys/class/gpio/gpio35/value
+		elif [ $2 = 'off' ]; then
+			echo 0 > /sys/class/gpio/gpio35/value
+		else
+			echo "Error: out4 unknow parameter!"
+			exit 1
+		fi
+	;;
+	'out5' )
+		# Set the direction
+		if [ ! -d "/sys/class/gpio/gpio38" ]
+		then
+			echo 38 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio38/direction
+		fi
+		
+		# Check about the on/off option
+		if [ $2 = 'on' ]; then
+			echo 1 > /sys/class/gpio/gpio38/value
+		elif [ $2 = 'off' ]; then
+			echo 0 > /sys/class/gpio/gpio38/value
+		else
+			echo "Error: out5 unknow parameter!"
+			exit 1
+		fi
+	;;
+	'out6' )
+		# Set the direction
+		if [ ! -d "/sys/class/gpio/gpio13" ]
+		then
+			echo 13 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio13/direction
+		fi
+		
+		# Check about the on/off option
+		if [ $2 = 'on' ]; then
+			echo 1 > /sys/class/gpio/gpio13/value
+		elif [ $2 = 'off' ]; then
+			echo 0 > /sys/class/gpio/gpio13/value
+		else
+			echo "Error: out6 unknow parameter!"
+			exit 1
+		fi
+	;;
+	'out7' )
+		# Set the direction
+		if [ ! -d "/sys/class/gpio/gpio12" ]
+		then
+			echo 12 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio12/direction
+		fi
+		
+		# Check about the on/off option
+		if [ $2 = 'on' ]; then
+			echo 1 > /sys/class/gpio/gpio12/value
+		elif [ $2 = 'off' ]; then
+			echo 0 > /sys/class/gpio/gpio12/value
+		else
+			echo "Error: out7 unknow parameter!"
+			exit 1
+		fi
+	;;
+	'out8' )
+		# Set the direction
+		if [ ! -d "/sys/class/gpio/gpio26" ]
+		then
+			echo 26 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio26/direction
+		fi
+		
+		# Check about the on/off option
+		if [ $2 = 'on' ]; then
+			echo 1 > /sys/class/gpio/gpio26/value
+		elif [ $2 = 'off' ]; then
+			echo 0 > /sys/class/gpio/gpio26/value
+		else
+			echo "Error: out8 unknow parameter!"
+			exit 1
+		fi
+	;;
+	'outen2' )
+		if [ $DBGMSG -eq 1 ]; then echo "command out enable: $1" ; fi
+		
+		# Set direction
+		if [ ! -d "/sys/class/gpio/gpio21" ]
+		then
+			echo 21 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio21/direction
+		fi
+
+		# Check about right arguments number
+		if [ $# -eq 2 ];
+		then
+			# Check about the on/off option
+			if [ $2 = 'on' ]; then
+				echo 1 > /sys/class/gpio/gpio21/value
+			elif [ $2 = 'off' ]; then
+				echo 0 > /sys/class/gpio/gpio21/value
+			else
+				echo "Error: outen2 state shall be only on or off!"
+				exit 1
+			fi
+		else
+			echo "RPICM3 utility reference manual - outen2 section"
+			echo "rpicm3 outen2 on|off"
+			echo "This feature enable or disable (3-state) the out2 group of outputs"
+			exit 1
+		fi
+	;;
+	'outen1' )
+		# Set direction
+		if [ ! -d "/sys/class/gpio/gpio11" ]
+		then
+			echo 11 > /sys/class/gpio/export
+			echo out > /sys/class/gpio/gpio11/direction
+		fi
+		
+		if [ $# -eq 2 ];
+		then
+			# Set state
+			if [ $2 = 'on' ]; then
+				echo 1 > /sys/class/gpio/gpio11/value
+			elif [ $2 = 'off' ]; then
+				echo 0 > /sys/class/gpio/gpio11/value
+			else
+				echo "Error: outen1 state shall be only on or off!"
+				exit 1
+			fi
+		else
+			echo "RPICM3 utility reference manual - outen1 section"
+			echo "rpicm3 outen1 on|off"
+			echo "This feature enable or disable (3-state) the out1 group of outputs"
+			exit 1
+		fi
+	;;
+	'outenall' )
+		if [[ ( $2 == 'on' ) || ( $2 == 'off' ) ]]
+		then
+		
+			# Set direction
+			if [ ! -d "/sys/class/gpio/gpio11" ]
+			then
+				echo 11 > /sys/class/gpio/export
+				echo out > /sys/class/gpio/gpio11/direction
+			fi
+			
+			# Set direction
+			if [ ! -d "/sys/class/gpio/gpio21" ]
+			then
+				echo 21 > /sys/class/gpio/export
+				echo out > /sys/class/gpio/gpio21/direction
+			fi
+			
+			# Set the enable lines
+			if [[ $2 == 'on' ]]; then
+				echo 1 > /sys/class/gpio/gpio11/value
+				echo 1 > /sys/class/gpio/gpio21/value
+			else
+				echo 0 > /sys/class/gpio/gpio11/value
+				echo 0 > /sys/class/gpio/gpio21/value
+			fi
+			
+		else
+			echo "RPICM3 utility reference manual - outenall section"
+			echo "rpicm3 outenall on|off"
+			echo "This feature enable or disable (3-state) the out1 and out2 enable output lines"
+			exit 1
+		fi
+	;;
+	'outall' )
+		# Check about the arguments for the feature outall
+		if [[ ( $# -eq 2 ) && ( ( $2 == 'on' ) || ( $2 == 'off' ) || ( $2 == 'unexport' ) ) ]];
+		then
+			# Array for the output GPIO port index
+			DT_OUTPUTS=(26 12 13 38 35 37 20 36)
+			
+			# Perform the command
+			if [[ $2 == 'unexport' ]]
+			then
+				# Unexport GPIO ports
+				eval $(gpio unexportall)
+			else
+				# Loop over all the outputs
+				for i in $(seq 0 7)
+					do
+						# Set the direction
+						DT_DIRECTION="/sys/class/gpio/gpio"${DT_OUTPUTS[$i]}
+						if [ ! -d $DT_DIRECTION ]; then
+							echo ${DT_OUTPUTS[$i]} > /sys/class/gpio/export
+							DT_PIN="/sys/class/gpio/gpio"${DT_OUTPUTS[$i]}"/direction"
+							echo out > $DT_PIN
+						fi
+
+						# Set the output value
+						DT_VALUE="/sys/class/gpio/gpio"${DT_OUTPUTS[$i]}"/value"
+						if [ $2 = 'on' ]; then
+							echo 1 > $DT_VALUE
+						elif [ $2 = 'off' ]; then
+							echo 0 > $DT_VALUE
+						fi
+					done
+			fi
+		else
+			echo "RPICM3 utility reference manual - outall section"
+			echo "rpicm3 outall on|off|unexport"
+			echo "This feature set high (on) or low (off) all output lines or delete (unexport) all the actually exported GPIO lines."
+			echo 'The unexport option is equivalent to the direct "gpio unexportall" command, please see the WiringPi docs for more information.'
+			exit 1
+		fi
+	;;
+	* )
+		# echo -e "argument error! \n Option \"$1\" is not supported!"
+		echo "Argument error!"
+		echo "The entered option \"$1\" is not recognized!"
+		exit 1
+	;;
+esac
+exit 0
+
