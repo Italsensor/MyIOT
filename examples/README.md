@@ -43,4 +43,8 @@ For other details about the available GPIO and related function take a look at t
 
 # Tornado folder
 
-This is related to a very simple communication project based on the Python module Tornado, using a simple Python script and a php file you are able to turn on and off a led connected to a raspberry GPIO. See the Python file about the usage instruction.
+This example is related to a very simple communication project based on the Python module Tornado, by means of a simple Python script and a php file you are able to turn on and off a led connected to a raspberry GPIO. See the Python file about the usage instruction.
+
+Concerning the usage, the web interface file (.php) and the jquery javascript file (used mainly to perform a little styling on the web page and make easier the communications events management task) should be put in your Apache default web site default folder (typically located at */var/www/html* absolute path), then launch the Python script (can be located also into the web site folder or in any other folder you like) and try to connect to the Raspberry web page.
+
+The Python script assume that an external led with a limiting resistor (1k can be enough) soldered in series are connected between the Raspberry port GPIO16 and one available GPIO 0V pin.
