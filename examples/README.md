@@ -21,12 +21,12 @@ for example:
 
 To manage outputs on expansion module there are the following options:
 
-led     : turn (on) o turn (off) led L1
-led1    : turn (on) turn (off) led L2
-out<n>  : set to “1” (5V) or to “0” (0V) output line n (n=1…8)
-outall  : set to “1” (5V) or to “0” (0V) all the output line
-outen<n>: enable (on) or disable (off) first or second group of the 4 output lines
-outenall: enable (on) or disable (off) all the outputs placing them on high impedance (3-state)
+- led     : turn (on) o turn (off) led L1
+- led1    : turn (on) turn (off) led L2
+- out<n>  : set to “1” (5V) or to “0” (0V) output line n (n=1…8)
+- outall  : set to “1” (5V) or to “0” (0V) all the output line
+- outen<n>: enable (on) or disable (off) first or second group of the 4 output lines
+- outenall: enable (on) or disable (off) all the outputs placing them on high impedance (3-state)
   
 There are also other demo programs, written in Python, that can be used as starting point in writing their own applications.
 
