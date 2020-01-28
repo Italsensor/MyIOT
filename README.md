@@ -20,7 +20,7 @@ $ sudo apt-get install i2c-tools
 When all the above steps are completed, download and then install the RTC configuration script by using these commands:
 
 ```
-wget https://github.com/Italsensor/MyIOT/blob/master/rtc-install
+wget https://github.com/Italsensor/MyIOT/blob/master/configrtc.sh
 chmod 755 rtc-install
 sudo ./rtc-install
 ```
