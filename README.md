@@ -46,21 +46,23 @@ In order to check the date stored into the hardware clock module you can use thi
 $ sudo hwclock -r
 2020-01-28 13:10:26.785306+0100
 ```
-if the returned date are not correct use the -w flag to force the correct date to be written inside the hardware clock module, so:
+if the returned date are not correct use the *hwclock* command with the *-w* flag to force the date to be written inside the hardware clock module, so:
 
 ```
 $ sudo hwclock -w
 ```
 
-Now check again the date with the -r option as did above and look if this time the returned date is right or not.
-If the date is not correct this may be due to an incorrect I2C bus behavior so run these commands:
+Now check again the date with the *-r* option as did above and look if the returned date is right or not.
+
+If the date is not correct this may be due to an incorrect I2C bus configuration/behavior or an hardware issue of the Compute Module or the hardware RTC module.
+To perform some indeep checking run these commands:
 
 ```
 sudo modprobe -r rtc_ds1307
 sudo i2cdetect 1
 ```
 
-here bwlow the expected output, press Y to perform the checking:
+press *Y* to run the test:
 
 ```
 WARNING! This program can confuse your I2C bus, cause data loss and worse!
@@ -78,16 +80,17 @@ Continue? [Y/n] Y
 70: -- -- -- -- -- -- -- --
 ```
 
-you must see the 6f address inside the list.
-If you can not see this address may be that the I2C interface is not proper functioning or may be a hardware related the on board hardware RTC module.
+you must see the *6f* address listed inside the table.
+If you can not see this address may be that the I2C interface is not proper functioning or may be a hardware issue related to the Compute Module or the on board hardware RTC module.
 To check about the proper I2C module initialization by the Linux Kernel use the command:
 
 ```
 $ lsmod
 ```
-inside the shown list check if the *i2c_dev* and *i2c_bcm2835* identifier are still presents, this mean that the Linux kernel was able to load the right modules needed to handle the I2C communication interface, then double check if you have properly installed the RTC module (see the previus section for the installing step).
 
-if all the check concenrning the kernel modules and the installing step are succesfully may be an hardware issue of the RTC module or the Raspberry Compute Module, so try to change first the Compute Module with another one that you know is properly working and check again.
+inside the returned module list check if the *i2c_dev* and the *i2c_bcm2835* identifier are still presents, this mean that the Linux kernel was able to load the right modules needed to handle the I2C communication interface, then double check if you have properly installed the RTC module (see the previous section for the RTC installing steps).
+
+If all the check concerning the kernel modules and the installing steps are did succesfully may be an hardware issue of the RTC module or the Raspberry Compute Module, so try to change first the Compute Module with another one that you know is properly working and check again.
 
 **How to install the batch file for command line command usage**
 
